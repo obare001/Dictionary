@@ -1,18 +1,34 @@
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "./components/ui/input";
-import { useState } from "react";
 import { Button } from "./components/ui/button";
+import { useState } from "react";
 
+interface Definition {
+  definition: string;
+  example?: string;
+  synonyms?: string[];
+}
 
-function App() {
-  const [wordMeaning,setWordMeaning]=useState("");
-  const [searchWord,setSearchWord]=useState("");
+interface Meaning {
+  partOfSpeech: string;
+  definitions: Definition[];
+}
 
-  const { data, isLoading, isError, error } = useQuery({
+interface WordItem {
+  word: string;
+  phonetics?: { text?: string; audio?: string }[];
+  meanings: Meaning[];
+}
+
+function App(): JSX.Element {
+  const [wordMeaning, setWordMeaning] = useState<string>("");
+  const [searchWord, setSearchWord] = useState<string>("");
+
+  const query = useQuery<WordItem[], Error>({
     queryKey: ["get-word-meaning", searchWord],
-    queryFn: async function() {
-      const response = await axios.get(
+    queryFn: async function(): Promise<WordItem[]> {
+      const response = await axios.get<WordItem[]>(
         `https://api.dictionaryapi.dev/api/v2/entries/en/${searchWord}`
       );
       return response.data;
@@ -20,17 +36,17 @@ function App() {
     enabled: !!searchWord,
   });
 
-  function handleSubmit(e) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault();
-    if (!wordMeaning){
+    if (!wordMeaning) {
       alert("Enter a word");
       return;
     }
     setSearchWord(wordMeaning.trim());
   }
 
-  if (isLoading) return <h1>Loading please wait...</h1>;
-  if (isError) return <h1>{error.message}</h1>;
+  if (query.isLoading) return <h1>Loading...</h1>;
+  if (query.isError) return <h1>{query.error.message}</h1>;
 
   return (
     <>
@@ -38,18 +54,32 @@ function App() {
         <Input
           placeholder="Enter word"
           value={wordMeaning}
-          onChange={function(e){ setWordMeaning(e.target.value) }}
+          onChange={function(e: React.ChangeEvent<HTMLInputElement>): void {
+            setWordMeaning(e.target.value);
+          }}
         />
         <Button type="submit">Search</Button>
       </form>
+
       <div>
-        {data && data.map(function(item,index){
-          var firstMeaning = item.meanings && item.meanings[0];
-          var firstDefinition = firstMeaning && firstMeaning.definitions && firstMeaning.definitions[0]
-            ? firstMeaning.definitions[0].definition
-            : "No definition found";
-          return <p key={index}><strong>{item.word}:</strong> {firstDefinition}</p>;
-        })}
+        {query.data &&
+          query.data.map(function(item: WordItem, index: number) {
+            var firstMeaning =
+              item.meanings && item.meanings.length > 0
+                ? item.meanings[0]
+                : undefined;
+            var firstDefinition =
+              firstMeaning &&
+              firstMeaning.definitions &&
+              firstMeaning.definitions.length > 0
+                ? firstMeaning.definitions[0].definition
+                : "No definition found";
+            return (
+              <p key={index}>
+                <strong>{item.word}:</strong> {firstDefinition}
+              </p>
+            );
+          })}
       </div>
     </>
   );
