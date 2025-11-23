@@ -21,7 +21,7 @@ interface WordItem {
   meanings: Meaning[];
 }
 
-function App(): JSX.Element {
+function App() {
   const [wordMeaning, setWordMeaning] = useState<string>("");
   const [searchWord, setSearchWord] = useState<string>("");
 
@@ -49,19 +49,22 @@ function App(): JSX.Element {
   if (query.isError) return <h1>{query.error.message}</h1>;
 
   return (
-    <>
+    <div className=" container my-2 m-auto">
       <form onSubmit={handleSubmit}>
-        <Input
+       <div className="my-2">
+         <Input
           placeholder="Enter word"
+          className="w-3/4 mr-2"
           value={wordMeaning}
           onChange={function(e: React.ChangeEvent<HTMLInputElement>): void {
             setWordMeaning(e.target.value);
           }}
         />
         <Button type="submit">Search</Button>
+       </div>
       </form>
-
-      <div>
+{searchWord}
+      <div className={` border border-${searchWord}-500 bg-${searchWord}-500/20 rounded-lg p-4`}>
         {query.data &&
           query.data.map(function(item: WordItem, index: number) {
             var firstMeaning =
@@ -81,7 +84,7 @@ function App(): JSX.Element {
             );
           })}
       </div>
-    </>
+    </div>
   );
 }
 
